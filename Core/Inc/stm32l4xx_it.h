@@ -42,7 +42,7 @@
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define Magic_Number -0.703125f
+#define Magic_Number -0.703125f // 360/512 z jakiegoś powodu
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

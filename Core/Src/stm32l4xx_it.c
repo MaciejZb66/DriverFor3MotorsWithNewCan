@@ -339,19 +339,20 @@ void TIM6_DAC_IRQHandler(void)
 
 #define Jump 0.0833f
 #define Encoder_Step 512
+#define Freq 12*60
 
-	mechanicPI_FIRST->Vobr = (((float)((int16_t)DRIVER_1_ENCODER_CNT))*Magic_Number/2); // przelicza na predkosc obrotowa
+	mechanicPI_FIRST->Vobr = (((float)((int16_t)DRIVER_1_ENCODER_CNT))*Magic_Number*2); // przelicza na predkosc obrotowa
 	mechanicPI_FIRST->TrueVobr = (((float)((int16_t)(DRIVER_1_ENCODER_CNT)))/Jump);
-	mechanicPI_SECOND->Vobr = (((float)((int16_t)DRIVER_2_ENCODER_CNT))*Magic_Number/2);
+	mechanicPI_SECOND->Vobr = (((float)((int16_t)DRIVER_2_ENCODER_CNT))*Magic_Number*2);
 	mechanicPI_SECOND->TrueVobr = (((float)((int16_t)(DRIVER_2_ENCODER_CNT)))/Jump);
 
 	__HAL_LPTIM_DISABLE(&hlptim1);
 
-	mechanicPI_THIRD->Vobr = (((float)((int16_t)DRIVER_3_ENCODER_CNT))*Magic_Number/2);
+	mechanicPI_THIRD->Vobr = (((float)((int16_t)DRIVER_3_ENCODER_CNT))*Magic_Number*2);
 	mechanicPI_THIRD->TrueVobr = (((float)((int16_t)(DRIVER_3_ENCODER_CNT)))/Jump/ Encoder_Step);
 	DRIVER_1_ENCODER_CNT = 0;
-	//DRIVER_2_ENCODER_CNT = 0;
-	// DRIVER_3_ENCODER_CNT = 0;
+	DRIVER_2_ENCODER_CNT = 0;
+	DRIVER_3_ENCODER_CNT = 0;
 
 	__HAL_LPTIM_ENABLE(&hlptim1);
 	__HAL_LPTIM_START_CONTINUOUS(&hlptim1);
