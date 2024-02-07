@@ -85,6 +85,9 @@ uint8_t estop = 0;
 
 int16_t enkoder_int;
 uint16_t enkoder_u;
+int16_t last_en1_count;
+int16_t last_en2_count;
+int16_t last_en3_count;
 
 uint32_t arrRegisterSave;
 uint32_t cmpRegisterSave;
@@ -307,52 +310,41 @@ void TIM6_DAC_IRQHandler(void)
   /* USER CODE END TIM6_DAC_IRQn 0 */
   HAL_TIM_IRQHandler(&htim6);
   /* USER CODE BEGIN TIM6_DAC_IRQn 1 */
-//	switch(driver_encoderStatus){
-//	case ENCODER_READY:
-//
-//		DRIVER_1_ENCODER_CNT = 0;
-//		DRIVER_2_ENCODER_CNT = 0;
-//		DRIVER_3_ENCODER_CNT = 0;
-//
-//		__HAL_LPTIM_ENABLE(&hlptim1);
-//		__HAL_LPTIM_START_CONTINUOUS(&hlptim1);
-//
-//		driver_encoderStatus = ENCODER_PROCESSING;
-//
-//		break;
-//	case ENCODER_PROCESSING:
-//		enkoder_int = DRIVER_2_ENCODER_CNT;
-//		enkoder_u = DRIVER_2_ENCODER_CNT;
-//
-//		mechanicPI_FIRST->Vobr = (((float)((int16_t)DRIVER_1_ENCODER_CNT))*Magic_Number); // przelicza na predkosc obrotowa
-//		mechanicPI_SECOND->Vobr = (((float)((int16_t)DRIVER_2_ENCODER_CNT))*Magic_Number);
-//
-//	    __HAL_LPTIM_DISABLE(&hlptim1);
-//
-//		mechanicPI_THIRD->Vobr = (((float)((int16_t)DRIVER_3_ENCODER_CNT))*Magic_Number);
-//
-//		driver_encoderStatus = ENCODER_READY;
-//
-//		break;
-//	}
 
-
-#define Jump 0.0833f
-#define Encoder_Step 512
-#define Freq 12*60
-
+	#define Encoder_Step 512
+	#define Freq 12*60
+	#define Halfcount 2<<15
+  	  if(((int16_t)(DRIVER_1_ENCODER_CNT)-last_en1_count)>64000){
+  		mechanicPI_FIRST->TrueVobr = (((float)(((int16_t)(DRIVER_1_ENCODER_CNT) - Halfcount) + (last_en1_count + Halfcount)))*Freq/Encoder_Step);
+  	  }else if (((int16_t)(DRIVER_1_ENCODER_CNT)-last_en1_count)< -64000) {
+  		mechanicPI_FIRST->TrueVobr = (((float)((-(int16_t)(DRIVER_1_ENCODER_CNT) + Halfcount) - (last_en1_count - Halfcount)))*Freq/Encoder_Step);
+  	  }else{
+		mechanicPI_FIRST->TrueVobr = (((float)((int16_t)(DRIVER_1_ENCODER_CNT)-last_en1_count))*Freq/Encoder_Step);
+  	  }
 	mechanicPI_FIRST->Vobr = (((float)((int16_t)DRIVER_1_ENCODER_CNT))*Magic_Number*2); // przelicza na predkosc obrotowa
-	mechanicPI_FIRST->TrueVobr = (((float)((int16_t)(DRIVER_1_ENCODER_CNT)))/Jump);
+
 	mechanicPI_SECOND->Vobr = (((float)((int16_t)DRIVER_2_ENCODER_CNT))*Magic_Number*2);
-	mechanicPI_SECOND->TrueVobr = (((float)((int16_t)(DRIVER_2_ENCODER_CNT)))/Jump);
+	if(((int16_t)(DRIVER_2_ENCODER_CNT)-last_en2_count)>64000){
+		mechanicPI_SECOND->TrueVobr = (((float)(((int16_t)(DRIVER_2_ENCODER_CNT)-Halfcount)+(last_en2_count + Halfcount)))*Freq/Encoder_Step);
+	  }else if (((int16_t)(DRIVER_2_ENCODER_CNT)-last_en2_count)< -64000) {
+		mechanicPI_SECOND->TrueVobr = (((float)((-(int16_t)(DRIVER_2_ENCODER_CNT)+Halfcount)-(last_en2_count - Halfcount)))*Freq/Encoder_Step);
+	  }else{
+		mechanicPI_SECOND->TrueVobr = (((float)((int16_t)(DRIVER_2_ENCODER_CNT)-last_en2_count))*Freq/Encoder_Step);
+	  }
 
 	__HAL_LPTIM_DISABLE(&hlptim1);
 
 	mechanicPI_THIRD->Vobr = (((float)((int16_t)DRIVER_3_ENCODER_CNT))*Magic_Number*2);
-	mechanicPI_THIRD->TrueVobr = (((float)((int16_t)(DRIVER_3_ENCODER_CNT)))/Jump/ Encoder_Step);
-	DRIVER_1_ENCODER_CNT = 0;
-	DRIVER_2_ENCODER_CNT = 0;
-	DRIVER_3_ENCODER_CNT = 0;
+	if(((int16_t)(DRIVER_3_ENCODER_CNT)-last_en3_count)>64000){
+		mechanicPI_THIRD->TrueVobr = (((float)(((int16_t)(DRIVER_3_ENCODER_CNT)-Halfcount)+(last_en3_count + Halfcount)))*Freq/Encoder_Step);
+	  }else if (((int16_t)(DRIVER_3_ENCODER_CNT)-last_en3_count)< -64000) {
+		mechanicPI_THIRD->TrueVobr = (((float)((-(int16_t)(DRIVER_3_ENCODER_CNT)+Halfcount)-(last_en3_count - Halfcount)))*Freq/Encoder_Step);
+	  }else{
+		mechanicPI_THIRD->TrueVobr = (((float)((int16_t)(DRIVER_3_ENCODER_CNT)-last_en3_count))*Freq/Encoder_Step);
+	  }
+	last_en1_count = DRIVER_1_ENCODER_CNT;
+	last_en2_count = DRIVER_2_ENCODER_CNT;
+	last_en3_count = DRIVER_3_ENCODER_CNT;
 
 	__HAL_LPTIM_ENABLE(&hlptim1);
 	__HAL_LPTIM_START_CONTINUOUS(&hlptim1);
